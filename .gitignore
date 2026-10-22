@@ -1,0 +1,22 @@
+# Временные файлы и артефакты
+*.log
+*.pyc
+__pycache__/
+.DS_Store
+
+# Сборочные артефакты
+dist/
+*.zip
+
+# Локальные тестовые скриншоты
+/tmp/
+/tmp/opencode/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node
+node_modules/

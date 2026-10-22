@@ -1,0 +1,25 @@
+{
+  "name": "Дели — счёт на всех",
+  "short_name": "Дели",
+  "description": "Считаем счёт на всех: позиции, скидка, чаевые, доля каждого. Ссылка-приглашение для друзей, всё считается на устройстве.",
+  "lang": "ru",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "id": "dela",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#101319",
+  "theme_color": "#101319",
+  "categories": ["finance", "utilities"],
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Новый счёт", "url": "./?new=1" }
+  ]
+}

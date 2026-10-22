@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Дели — счёт на всех</title>
+<meta name="description" content="Считаем счёт на всех: позиции, скидка, чаевые, доли по каждому. Ссылка-приглашение для друзей, всё считается на телефоне.">
+<meta name="theme-color" content="#101319">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">₽</span>
+    <div>
+      <h1>Дели</h1>
+      <p class="sub">счёт на всех — без регистрации</p>
+    </div>
+  </div>
+  <button id="themeToggle" class="icon-btn" type="button" title="Сменить тему" aria-label="Сменить тему">☾</button>
+</header>
+
+<!-- ============ РЕЖИМ СОЗДАТЕЛЯ ============ -->
+<main id="view-bill">
+
+  <section class="card">
+    <input id="title" class="title-input" type="text" placeholder="Название счёта" maxlength="60" autocomplete="off">
+    <div class="field-label">Участники</div>
+    <div id="peopleList" class="chips"></div>
+    <div class="add-row">
+      <input id="personName" type="text" placeholder="Добавить участника" maxlength="24" autocomplete="off" enterkeyhint="done">
+      <button id="addPerson" class="btn btn-ghost" type="button">Добавить</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="field-label">Позиции</div>
+    <div id="itemsList" class="items"></div>
+    <div class="add-item">
+      <input id="itemName" type="text" placeholder="Что заказали" maxlength="40" autocomplete="off">
+      <input id="itemPrice" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Цена" autocomplete="off">
+      <select id="itemPayer" aria-label="Кто платил"></select>
+      <button id="addItem" class="btn btn-primary" type="button">+</button>
+    </div>
+    <p class="hint">Каждой позиции отмечаем, кто за неё заплатил — по этому считаются доли.</p>
+  </section>
+
+  <section class="card">
+    <div class="two-col">
+      <label class="mini">
+        <span>Скидка</span>
+        <span class="combo">
+          <input id="discVal" type="number" inputmode="decimal" step="1" min="0" placeholder="0" autocomplete="off">
+          <select id="discType" aria-label="Тип скидки">
+            <option value="pct">%</option>
+            <option value="fixed">₽</option>
+          </select>
+        </span>
+      </label>
+      <label class="mini">
+        <span>Чаевые</span>
+        <span class="combo">
+          <input id="tipVal" type="number" inputmode="decimal" step="1" min="0" placeholder="0" autocomplete="off">
+          <select id="tipType" aria-label="Тип чаевых">
+            <option value="pct">%</option>
+            <option value="fixed">₽</option>
+          </select>
+        </span>
+      </label>
+    </div>
+    <div class="seg" id="splitMode">
+      <button type="button" data-split="equal" class="active">Делим поровну</button>
+      <button type="button" data-split="items">По тому, кто заказал</button>
+    </div>
+  </section>
+
+  <section id="results" class="card results"></section>
+
+  <div class="actions">
+    <button id="makeLink" class="btn btn-primary block" type="button">Собрать ссылку для друзей</button>
+    <button id="copySummary" class="btn btn-ghost block" type="button">Скопировать сводку</button>
+    <button id="newBill" class="btn btn-ghost block danger" type="button">Новый счёт</button>
+  </div>
+
+  <p class="foot">Всё считается в браузере на твоём устройстве. Ничего никуда не отправляется, кроме ссылки, которую ты сам отправишь.</p>
+</main>
+
+<!-- ============ РЕЖИМ ГОСТЯ (открыт по ссылке) ============ -->
+<main id="view-my" hidden>
+  <section class="card">
+    <h2 id="myTitle">Счёт</h2>
+    <div id="myTotal" class="big-total"></div>
+  </section>
+
+  <section class="card">
+    <div class="field-label">Кто ты в этом счёте?</div>
+    <div id="myPeople" class="chips"></div>
+    <div id="myShare" class="share-box"></div>
+    <label class="field-label" for="myPaid">Я заплатил</label>
+    <input id="myPaid" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0" autocomplete="off">
+    <button id="myPaidBtn" class="btn btn-primary block" type="button">Отметить оплату</button>
+    <p class="hint">Приложение даст ссылку со статусом — отправь её тому, кто собирает счёт. У него сразу появятся отметки. Без сервера и регистрации.</p>
+  </section>
+
+  <section class="card">
+    <div class="field-label">Весь счёт</div>
+    <div id="myAll" class="rows"></div>
+  </section>
+</main>
+
+<!-- ============ ШТОРКА СО ССЫЛКОЙ ============ -->
+<div id="shareSheet" class="sheet" hidden>
+  <div class="sheet-box">
+    <h3 id="sheetTitle">Ссылка на счёт</h3>
+    <input id="shareUrl" class="share-url" type="text" readonly>
+    <p id="shareHint" class="hint"></p>
+    <div class="actions">
+      <button id="copyLink" class="btn btn-primary block" type="button">Скопировать ссылку</button>
+      <a id="tgShare" class="btn btn-ghost block" target="_blank" rel="noopener">Поделиться в Telegram</a>
+    </div>
+    <button id="closeSheet" class="btn btn-ghost block" type="button">Закрыть</button>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="logic.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
