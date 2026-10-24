@@ -43,10 +43,9 @@
     <div class="add-item">
       <input id="itemName" type="text" placeholder="Что заказали" maxlength="40" autocomplete="off">
       <input id="itemPrice" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Цена" autocomplete="off">
-      <select id="itemPayer" aria-label="Кто платил"></select>
       <button id="addItem" class="btn btn-primary" type="button">+</button>
     </div>
-    <p class="hint">Каждой позиции отмечаем, кто за неё заплатил — по этому считаются доли.</p>
+    <p class="hint">Кто за что заплатил — можно выбрать нескольких человек на одну позицию.</p>
   </section>
 
   <section class="card">
@@ -72,10 +71,7 @@
         </span>
       </label>
     </div>
-    <div class="seg" id="splitMode">
-      <button type="button" data-split="equal" class="active">Делим поровну</button>
-      <button type="button" data-split="items">По тому, кто заказал</button>
-    </div>
+    <p class="hint">Счёт делится поровну между всеми участниками. Укажи, кто платил за каждую позицию — цена разделится между выбранными.</p>
   </section>
 
   <section id="results" class="card results"></section>

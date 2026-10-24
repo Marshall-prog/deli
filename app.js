@@ -126,12 +126,15 @@
     select.value = value !== undefined && value !== '' ? value : (state.people[0] || '');
   }
 
+  function getBys(item) {
+    if (Array.isArray(item.bys) && item.bys.length) return item.bys.slice();
+    if (item.by) return [item.by];
+    if (state.people.length) return [state.people[0]];
+    return [];
+  }
+
   function renderPayerOptions() {
-    fillPayerSelect($('itemPayer'), $('itemPayer') ? $('itemPayer').value : '');
-    var selects = document.querySelectorAll('#itemsList select.who');
-    for (var i = 0; i < selects.length; i++) {
-      fillPayerSelect(selects[i], selects[i].getAttribute('data-by') || '');
-    }
+    // больше не используется
   }
 
   /* ---------------- рендер: позиции ---------------- */
@@ -174,14 +177,34 @@
         renderResults();
       });
 
-      var who = el('select', 'who');
-      who.setAttribute('data-by', item.by || '');
-      fillPayerSelect(who, item.by || '');
-      who.addEventListener('change', function () {
-        state.items[idx].by = who.value;
-        save();
-        renderResults();
+      var payers = el('div', 'payers');
+      if (!Array.isArray(state.items[idx].bys)) state.items[idx].bys = getBys(item);
+      state.people.forEach(function (person) {
+        var chip = el('button', 'chip' + (state.items[idx].bys.indexOf(person) >= 0 ? ' active' : ''), person);
+        chip.type = 'button';
+        chip.addEventListener('click', function () {
+          var list = Array.isArray(state.items[idx].bys) ? state.items[idx].bys.slice() : [];
+          var i2 = list.indexOf(person);
+          if (i2 >= 0) {
+            if (list.length === 1) {
+              toast('Нужен хотя бы один плательщик');
+              return;
+            }
+            list.splice(i2, 1);
+          } else {
+            list.push(person);
+          }
+          state.items[idx].bys = list;
+          state.items[idx].by = list[0] || '';
+          save();
+          renderItems();
+          renderResults();
+        });
+        payers.appendChild(chip);
       });
+      if (!state.people.length) {
+        payers.appendChild(el('div', 'hint', 'Сначала добавь участников'));
+      }
 
       var del = el('button', 'del', '×');
       del.type = 'button';
@@ -195,7 +218,7 @@
 
       row.appendChild(name);
       row.appendChild(price);
-      row.appendChild(who);
+      row.appendChild(payers);
       row.appendChild(del);
       box.appendChild(row);
     });
@@ -204,13 +227,14 @@
   function addItem() {
     var name = $('itemName');
     var price = $('itemPrice');
-    var payer = $('itemPayer');
     var value = D.num(price.value);
     if (!(value > 0)) { toast('Введи цену позиции'); price.focus(); return; }
+    if (!state.people.length) { toast('Сначала добавь участников'); return; }
     state.items.push({
       n: (name.value || '').trim().slice(0, 40),
       p: value,
-      by: payer.value || state.people[0] || ''
+      bys: [state.people[0]],
+      by: state.people[0]
     });
     name.value = '';
     price.value = '';
@@ -248,7 +272,7 @@
 
       var note = el('div', 'note');
       if (row.balance > 0) {
-        note.textContent = 'заплатил ' + D.fmtRub(row.paid) + ' · переплатил ' + D.fmtRub(row.balance);
+        note.textContent = 'заплатил ' + D.fmtRub(row.paid) + ' · скидка ' + D.fmtRub(row.balance);
         note.classList.add('ok');
       } else if (row.balance < 0) {
         note.textContent = 'заплатил ' + D.fmtRub(row.paid) + ' · не хватает ' + D.fmtRub(-row.balance);
@@ -282,7 +306,6 @@
 
   function renderAll() {
     renderPeople();
-    renderPayerOptions();
     renderItems();
     renderResults();
   }
@@ -399,17 +422,6 @@
     on('tipVal', 'input', function (e) { state.tip.v = e.target.value; save(); renderResults(); });
     on('tipType', 'change', function (e) { state.tip.t = e.target.value; save(); renderResults(); });
 
-    var segButtons = document.querySelectorAll('#splitMode button');
-    for (var i = 0; i < segButtons.length; i++) {
-      segButtons[i].addEventListener('click', function (e) {
-        state.split = e.currentTarget.getAttribute('data-split');
-        for (var j = 0; j < segButtons.length; j++) segButtons[j].classList.remove('active');
-        e.currentTarget.classList.add('active');
-        save();
-        renderResults();
-      });
-    }
-
     on('makeLink', 'click', makeLink);
     on('copySummary', 'click', function () {
       if (!state.people.length) { toast('Счёт пустой'); return; }
@@ -419,9 +431,11 @@
       if (!window.confirm('Сбросить текущий счёт?')) return;
       state = D.emptyBill();
       save();
-      $('title').value = '';
-      $('discVal').value = '';
-      $('tipVal').value = '';
+      var t = $('title'); if (t) t.value = '';
+      var dv = $('discVal'); if (dv) dv.value = '';
+      var tv = $('tipVal'); if (tv) tv.value = '';
+      var dt = $('discType'); if (dt) dt.value = 'pct';
+      var tt = $('tipType'); if (tt) tt.value = 'pct';
       renderAll();
       toast('Новый счёт готов');
     });
@@ -487,10 +501,6 @@
       $('tipVal').value = state.tip.v ? state.tip.v : '';
       $('discType').value = state.disc.t;
       $('tipType').value = state.tip.t;
-      var segButtons = document.querySelectorAll('#splitMode button');
-      for (var i = 0; i < segButtons.length; i++) {
-        segButtons[i].classList.toggle('active', segButtons[i].getAttribute('data-split') === state.split);
-      }
       renderAll();
     }
 
