@@ -4,12 +4,14 @@
 
   var D = globalThis.Dela;
   var LS_BILL = 'dela.bill.v1';
+  var LS_HISTORY = 'dela.history.v1';
   var LS_THEME = 'dela.theme';
   var LS_ME = 'dela.me';
 
   var state = D.emptyBill();   // счёт создателя
   var incoming = null;         // счёт, открытый по ссылке
   var me = '';                 // кто я в чужом счёте
+  var historySheetUrl = '';    // для шаринга из истории
 
   function $(id) { return document.getElementById(id); }
   function on(id, ev, fn) { var el = $(id); if (el) el.addEventListener(ev, fn); }
@@ -26,6 +28,50 @@
       try { state = D.sanitize(JSON.parse(raw)); } catch (e) { state = D.emptyBill(); }
     }
     me = read(LS_ME) || '';
+  }
+
+  /* ---------------- история счетов ---------------- */
+
+  function getHistory() {
+    var raw = read(LS_HISTORY);
+    if (!raw) return [];
+    try { return JSON.parse(raw); } catch (e) { return []; }
+  }
+
+  function saveHistory(hist) { store(LS_HISTORY, JSON.stringify(hist)); }
+
+  function addToHistory(bill) {
+    var hist = getHistory();
+    var entry = {
+      id: Date.now(),
+      title: bill.title || 'Счёт',
+      total: D.compute(bill).total,
+      peopleCount: bill.people.length,
+      itemsCount: bill.items.length,
+      date: new Date().toISOString(),
+      bill: bill
+    };
+    hist.unshift(entry);
+    if (hist.length > 50) hist.length = 50; // лимит 50 записей
+    saveHistory(hist);
+  }
+
+  function deleteFromHistory(id) {
+    var hist = getHistory().filter(function (e) { return e.id !== id; });
+    saveHistory(hist);
+  }
+
+  function clearHistory() {
+    saveHistory([]);
+  }
+
+  function restoreFromHistory(id) {
+    var entry = getHistory().find(function (e) { return e.id === id; });
+    if (!entry) return;
+    state = D.sanitize(entry.bill);
+    save();
+    renderAll();
+    toast('Счёт восстановлен из истории');
   }
 
   /* ---------------- вспомогательное ---------------- */
@@ -402,8 +448,82 @@
   function makeLink() {
     if (!state.people.length) { toast('Сначала добавь участников'); return; }
     if (!state.items.length) { toast('Добавь хотя бы одну позицию'); return; }
+    addToHistory(state); // сохраняем в историю перед созданием ссылки
     var url = D.billUrl(state, location.origin + location.pathname);
     showSheet(url, 'В ссылке — весь счёт. Отправь её в чат: каждый откроет и увидит свою долю.', D.summaryText(state, D.compute(state)));
+  }
+
+  function renderHistory() {
+    var hist = getHistory();
+    var box = $('historyList');
+    if (!box) return;
+    box.innerHTML = '';
+    if (!hist.length) {
+      box.appendChild(el('div', 'hint', 'История пуста. Создайте счёт и нажмите «Собрать ссылку».'));
+      return;
+    }
+    hist.forEach(function (entry) {
+      var item = el('div', 'history-item');
+      var dt = new Date(entry.date);
+      var dateStr = dt.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
+                    dt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      item.innerHTML = '<div class="hist-main"><div class="hist-title">' + (entry.title || 'Счёт') + '</div>' +
+        '<div class="hist-meta">' + dateStr + ' · ' + D.fmtRub(entry.total) + ' · ' + entry.peopleCount + ' чел. · ' + entry.itemsCount + ' поз.</div></div>';
+      var actions = el('div', 'hist-actions');
+      var restoreBtn = el('button', 'btn btn-ghost small', 'Восстановить');
+      restoreBtn.type = 'button';
+      restoreBtn.addEventListener('click', function () {
+        restoreFromHistory(entry.id);
+        closeHistorySheet();
+      });
+      var shareBtn = el('button', 'btn btn-ghost small', 'Поделиться');
+      shareBtn.type = 'button';
+      shareBtn.addEventListener('click', function () {
+        var url = D.billUrl(entry.bill, location.origin + location.pathname);
+        historySheetUrl = url;
+        showSheet(url, 'Счёт из истории: ' + (entry.title || 'Счёт'), D.summaryText(entry.bill, D.compute(entry.bill)));
+      });
+      var delBtn = el('button', 'btn btn-ghost small danger', 'Удалить');
+      delBtn.type = 'button';
+      delBtn.addEventListener('click', function () {
+        if (window.confirm('Удалить этот счёт из истории?')) {
+          deleteFromHistory(entry.id);
+          renderHistory();
+        }
+      });
+      actions.appendChild(restoreBtn);
+      actions.appendChild(shareBtn);
+      actions.appendChild(delBtn);
+      item.appendChild(actions);
+      box.appendChild(item);
+    });
+    // кнопка очистки всей истории
+    if (hist.length) {
+      var clearBtn = el('button', 'btn btn-ghost block danger', 'Очистить всю историю');
+      clearBtn.type = 'button';
+      clearBtn.addEventListener('click', function () {
+        if (window.confirm('Удалить ВСЮ историю счетов?')) {
+          clearHistory();
+          renderHistory();
+        }
+      });
+      box.appendChild(clearBtn);
+    }
+  }
+
+  function showHistorySheet() {
+    var sheet = $('historySheet');
+    if (!sheet) return;
+    renderHistory();
+    sheet.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeHistorySheet() {
+    var sheet = $('historySheet');
+    if (!sheet) return;
+    sheet.hidden = true;
+    document.body.style.overflow = '';
   }
 
   /* ---------------- события ---------------- */
@@ -444,6 +564,10 @@
     on('copyLink', 'click', function () { copyText(sheetUrl, 'Ссылка скопирована'); });
     on('closeSheet', 'click', closeSheet);
     on('shareSheet', 'click', function (e) { if (e.target === $('shareSheet')) closeSheet(); });
+
+    on('historyBtn', 'click', showHistorySheet);
+    on('closeHistorySheet', 'click', closeHistorySheet);
+    on('historySheet', 'click', function (e) { if (e.target === $('historySheet')) closeHistorySheet(); });
 
     on('themeToggle', 'click', function () {
       var root = document.documentElement;

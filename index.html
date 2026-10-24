@@ -79,6 +79,7 @@
   <div class="actions">
     <button id="makeLink" class="btn btn-primary block" type="button">Собрать ссылку для друзей</button>
     <button id="copySummary" class="btn btn-ghost block" type="button">Скопировать сводку</button>
+    <button id="historyBtn" class="btn btn-ghost block" type="button">История счетов</button>
     <button id="newBill" class="btn btn-ghost block danger" type="button">Новый счёт</button>
   </div>
 
@@ -119,6 +120,15 @@
       <a id="tgShare" class="btn btn-ghost block" target="_blank" rel="noopener">Поделиться в Telegram</a>
     </div>
     <button id="closeSheet" class="btn btn-ghost block" type="button">Закрыть</button>
+  </div>
+</div>
+
+<!-- ============ ШТОРКА ИСТОРИИ ============ -->
+<div id="historySheet" class="sheet" hidden>
+  <div class="sheet-box">
+    <h3>История счетов</h3>
+    <div id="historyList" class="history-list"></div>
+    <button id="closeHistorySheet" class="btn btn-ghost block" type="button">Закрыть</button>
   </div>
 </div>
 

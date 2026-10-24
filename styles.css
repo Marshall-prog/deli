@@ -236,3 +236,14 @@ input::placeholder { color: var(--muted); opacity: 0.7; }
     grid-template-areas: "nm pr who add";
   }
 }
+
+/* ---------- история ---------- */
+.history-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.history-item {
+  background: var(--card-2); border: 1px solid var(--line); border-radius: 11px; padding: 12px;
+}
+.history-item .hist-main { flex: 1; }
+.history-item .hist-title { font-weight: 600; margin-bottom: 4px; }
+.history-item .hist-meta { font-size: 12.5px; color: var(--muted); }
+.history-item .hist-actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.btn.small { padding: 7px 10px; font-size: 13px; }
