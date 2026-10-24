@@ -448,7 +448,6 @@
   function makeLink() {
     if (!state.people.length) { toast('Сначала добавь участников'); return; }
     if (!state.items.length) { toast('Добавь хотя бы одну позицию'); return; }
-    addToHistory(state); // сохраняем в историю перед созданием ссылки
     var url = D.billUrl(state, location.origin + location.pathname);
     showSheet(url, 'В ссылке — весь счёт. Отправь её в чат: каждый откроет и увидит свою долю.', D.summaryText(state, D.compute(state)));
   }
@@ -459,7 +458,7 @@
     if (!box) return;
     box.innerHTML = '';
     if (!hist.length) {
-      box.appendChild(el('div', 'hint', 'История пуста. Создайте счёт и нажмите «Собрать ссылку».'));
+      box.appendChild(el('div', 'hint', 'История пуста. Создайте счёт и нажмите «Новый счёт» — он сохранится в историю.'));
       return;
     }
     hist.forEach(function (entry) {
@@ -549,6 +548,10 @@
     });
     on('newBill', 'click', function () {
       if (!window.confirm('Сбросить текущий счёт?')) return;
+      // сохраняем в историю, если счёт не пустой
+      if (state.people.length && state.items.length) {
+        addToHistory(state);
+      }
       state = D.emptyBill();
       save();
       var t = $('title'); if (t) t.value = '';
