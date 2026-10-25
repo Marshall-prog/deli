@@ -49,12 +49,18 @@ body {
   gap: 12px; padding: 18px 2px 12px;
 }
 .brand { display: flex; align-items: center; gap: 12px; }
+.logo-img {
+  width: 40px; height: 40px; border-radius: 12px;
+  object-fit: cover;
+  display: block;
+  box-shadow: var(--shadow);
+}
 .logo {
   width: 40px; height: 40px; border-radius: 12px;
   display: grid; place-items: center;
   background: var(--accent); color: #fff; font-weight: 700; font-size: 20px;
 }
-.top h1 { margin: 0; font-size: 20px; letter-spacing: -0.01em; }
+.top h1 { margin: 0; font-size: 17px; letter-spacing: -0.01em; line-height: 1.15; }
 .sub { margin: 0; font-size: 12.5px; color: var(--muted); }
 .icon-btn {
   width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line);
